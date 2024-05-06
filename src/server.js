@@ -1,31 +1,57 @@
-const { MongoClient } = require('mongodb')
-// Replace the uri string with your MongoDB deployment's connection string.
-const config = require('/config');
-const mongoUri = 'mongodb://' + config.mongodb.hostname + ':' + config.mongodb.port + '/' + config.mongodb.database;
+const express = require('express');
+const { MongoClient } = require('mongodb');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const config = require("/config");
 const date_time = new Date();
-// Create a new client and connect to MongoDB
-const client = new MongoClient(mongoUri);
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
 
-async function run() {
+const uri = 'mongodb://' + config.mongodb.hostname + ':' + config.mongodb.port + '/' + config.mongodb.database;
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+async function startServer() {
     try {
-        // Connect to the "insertDB" database and access its "haiku" collection
-        const database = client.db(config.mongodb.database);
-        const haiku = database.collection("message");
+        await client.connect();
+        console.log("Connected successfully to MongoDB");
+        const db = client.db(config.mongodb.database);
+        const haiku = db.collection(config.mongodb.collection);
 
-        // Create a document to insert
-        const doc = {
-            fecha: date_time,
-            content: "No bytes, no problem. Just insert a document, in MongoDB",
-        }
-        // Insert the defined document into the "haiku" collection
-        const result = await haiku.insertOne(doc);
 
-        // Print the ID of the inserted document
-        console.log(`A document was inserted with the _id: ${result.insertedId}`);
-    } finally {
-        // Close the MongoDB client connection
-        await client.close();
+        app.post('/save-data', async (req, res) => {
+            const { topic, message } = req.body;
+
+            // Create a document to insert
+            const document = { topic, message: message.toString(), fecha: date_time, content: "Prueba de content" };
+
+            try {
+                const result = await haiku.insertOne(document);
+                console.log(`Datos insertados del topic ${topic}`);
+                res.status(200).send(`Datos guardados ${result}`);
+            } catch (err) {
+                console.error('Error al guardar datos en MongoDB:', err);
+                res.status(500).send('Error al guardar datos en MongoDB');
+            }
+        });
+
+        app.get('/data', async (req, res) => {
+            try {
+                const data = await haiku.find({}).toArray();
+                res.send(data);
+            } catch (err) {
+                console.error('Error fetching data from MongoDB', err);
+                res.status(500).send('Error fetching data from MongoDB');
+            }
+        });
+
+        app.listen(config.mongodb.port, () => {
+            console.log('Server is running on port ' + config.mongodb.port);
+        });
+    } catch (err) {
+        console.error('Error connecting to MongoDB', err);
+        process.exit(1);
     }
 }
-// Run the function and handle any errors
-run().catch(console.dir);
+
+startServer().then(r => console.log('Server started successfully')).catch(err => console.error('Error starting server:', err));
