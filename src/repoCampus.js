@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb')
 // Replace the uri string with your MongoDB deployment's connection string.
-const config = require('/config');
+const config = require('./config');
 const mongoUri = 'mongodb://' + config.mongodb.hostname + ':' + config.mongodb.port + '/' + config.mongodb.database;
 const date_time = new Date();
 // Create a new client and connect to MongoDB
@@ -10,12 +10,14 @@ async function run() {
     try {
         // Connect to the "insertDB" database and access its "haiku" collection
         const database = client.db(config.mongodb.database);
-        const haiku = database.collection("message");
+        const haiku = database.collection("flights");
 
         // Create a document to insert
         const doc = {
-            fecha: date_time,
-            content: "No bytes, no problem. Just insert a document, in MongoDB",
+            passenger_id : '1',
+            flight_id : 'AR 1300',
+            max_weight : '100',
+            max_height : '10',
         }
         // Insert the defined document into the "haiku" collection
         const result = await haiku.insertOne(doc);

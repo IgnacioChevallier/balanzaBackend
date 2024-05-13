@@ -2,7 +2,7 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const config = require("/config");
+const config = require("./config");
 const date_time = new Date();
 const app = express();
 app.use(cors());
@@ -35,9 +35,12 @@ async function startServer() {
             }
         });
 
-        app.get('/data', async (req, res) => {
+        app.get('/data/:passengerID', async (req, res) => {
             try {
-                const data = await haiku.find({}).toArray();
+                const passengerID = req.params.passengerID;
+                const database = client.db('your_database_name'); // Replace 'your_database_name' with your actual database name
+                const flights = database.collection('flights');
+                const data = await flights.findOne({ passenger_id: passengerID });
                 res.send(data);
             } catch (err) {
                 console.error('Error fetching data from MongoDB', err);
