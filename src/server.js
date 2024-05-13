@@ -35,10 +35,11 @@ async function startServer() {
             }
         });
 
+        // GET request to fetch flights from db
         app.get('/data/:passengerID', async (req, res) => {
             try {
                 const passengerID = req.params.passengerID;
-                const database = client.db('your_database_name'); // Replace 'your_database_name' with your actual database name
+                const database = client.db(config.mongodb.database);
                 const flights = database.collection('flights');
                 const data = await flights.findOne({ passenger_id: passengerID });
                 res.send(data);
