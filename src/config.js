@@ -2,6 +2,9 @@ const config = {};
 
 config.debug = process.env.DEBUG || true;
 
+config.app = {};
+config.app.port = process.env.APP_PORT || 3333;
+
 config.mqtt  = {};
 config.mqtt.namespace = process.env.MQTT_NAMESPACE || '#';
 config.mqtt.hostname  = process.env.MQTT_HOSTNAME  || '52.71.113.81';

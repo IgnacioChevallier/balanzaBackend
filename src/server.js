@@ -49,8 +49,8 @@ async function startServer() {
             }
         });
 
-        app.listen(config.mongodb.port, () => {
-            console.log('Server is running on port ' + config.mongodb.port);
+        app.listen(config.app.port, () => {
+            console.log('Server is running on port ' + config.app.port);
         });
     } catch (err) {
         console.error('Error connecting to MongoDB', err);
@@ -58,4 +58,4 @@ async function startServer() {
     }
 }
 
-startServer().then(r => console.log('Server started successfully')).catch(err => console.error('Error starting server:', err));
+startServer().then(() => console.log('Server started successfully')).catch(err => console.error('Error starting server:', err));
