@@ -37,14 +37,13 @@ async function startServer() {
 
         app.post('/submitFlight', async (req, res) => {
             console.log('entro al backend submit-flight-data')
-            print('entro al backend submit-flight-data printt')
             const { passenger_id, flight_id, max_height, max_weight } = req.body;
 
             // Create a document to insert
             const document = { passenger_id, flight_id, max_height, max_weight };
 
             //especifico flights
-            const flights = client.db(config.mongodb.database).collection('flights');
+            const flights = client.db(config.mongodb.database).collection("flights");
 
             try {
                 const result = await flights.insertOne(document);
