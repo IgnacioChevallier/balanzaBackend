@@ -69,7 +69,7 @@ async function startServer() {
             }
         });
 
-        app.listen(config.app.port, () => {
+        app.listen(config.app.port, '127.0.0.1',() => {
             console.log('Server is running on port ' + config.app.port);
         });
     } catch (err) {
