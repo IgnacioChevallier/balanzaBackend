@@ -35,6 +35,27 @@ async function startServer() {
             }
         });
 
+        app.post('/submitFlight', async (req, res) => {
+            console.log('entro al backend submit-flight-data')
+            print('entro al backend submit-flight-data printt')
+            const { passenger_id, flight_id, maxHeight, maxWeight } = req.body;
+
+            // Create a document to insert
+            const document = { passenger_id, flight_id, maxHeight, maxWeight, fecha: new Date() };
+
+            //especifico flights
+            const flights = client.db(config.mongodb.database).collection('flights');
+
+            try {
+                const result = await flights.insertOne(document);
+                console.log(`Flight data inserted for passenger ${passenger_id}`);
+                res.status(200).send(`Flight data saved ${result}`);
+            } catch (err) {
+                console.error('Error saving flight data in MongoDB:', err);
+                res.status(500).send('Error saving flight data in MongoDB');
+            }
+        });
+
         // GET request to fetch flights from db
         app.get('/data/:passengerID', async (req, res) => {
             try {
