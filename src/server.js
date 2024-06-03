@@ -82,7 +82,7 @@ async function startServer() {
             });
         });
 
-        app.post('/publishMessage', (req, res) => {
+        app.post('/publishMessage', async (req, res) => {
             console.log('Attempting to connect to the client');
             console.log(mqttClient);
 
