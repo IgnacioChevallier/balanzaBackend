@@ -1,4 +1,3 @@
-import mqtt from 'mqtt';
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
@@ -11,7 +10,6 @@ app.use(bodyParser.json());
 
 const uri = 'mongodb://' + config.mongodb.hostname + ':' + config.mongodb.port + '/' + config.mongodb.database;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-const mqttClient = mqtt.connect('mqtt://' + config.mqtt.hostname + ':' + '1883');
 
 async function startServer() {
     try {
@@ -20,16 +18,6 @@ async function startServer() {
         const db = client.db(config.mongodb.database);
         const haiku = db.collection(config.mongodb.collection);
 
-        app.post('/led', async (req, res) => {
-            const { color } = req.body;
-            console.log("Color recibido: ${color}");
-            res.status(200).send('Color recibido: ${color}');
-            mqttClient.publish('color', color, {}, (error) => {
-                if (error) {
-                    console.error('Publish error:', error);
-                }
-            });
-        });
 
         app.post('/save-data', async (req, res) => {
             const { topic, message } = req.body;
@@ -79,53 +67,6 @@ async function startServer() {
                 console.error('Error fetching data from MongoDB', err);
                 res.status(500).send('Error fetching data from MongoDB');
             }
-        });
-
-        app.post('/publishMessage', async (req, res) => {
-            console.log('Attempting to connect to the client');
-            console.log(mqttClient);
-
-            let weightReceived = false;
-            let heightReceived = false;
-            let weight = null;
-            let height = null;
-
-            mqttClient.on('connect', () => {
-                    console.log('Connected to MQTT Broker on EC2');
-
-                // Subscribe to the topics 'weight' and 'height'
-                mqttClient.subscribe(['weight', 'height']);
-
-                // Publish a message to a topic
-                mqttClient.publish('start', 'clicked', {}, (error) => {
-                    if (error) {
-                        console.error('Publish error:', error);
-                    }
-                });
-            });
-
-            mqttClient.on('message', (topic, message) => {
-                console.log(`Message received on topic ${topic}: ${message.toString()}`);
-
-                if (topic === 'weight') {
-                    weightReceived = true;
-                    weight = message.toString();
-                } else if (topic === 'height') {
-                    heightReceived = true;
-                    height = message.toString()
-                }
-                console.log(weightReceived, heightReceived);
-                // If both data are received, send a response
-                if (weightReceived && heightReceived) {
-                    console.log("Weight and height received");
-                    res.json({weight: weight, height: height});
-                    mqttClient.end();
-                }
-            });
-
-            mqttClient.on('error', (error) => {
-                console.error('Connection error:', error);
-            });
         });
 
         app.listen(config.app.port, () => {
