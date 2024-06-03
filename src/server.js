@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 
 const uri = 'mongodb://' + config.mongodb.hostname + ':' + config.mongodb.port + '/' + config.mongodb.database;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-const mqttClient = mqtt.connect('ws://' + config.mqtt.hostname + ':' + config.mqtt.port);
+const mqttClient = mqtt.connect('mqtt://' + config.mqtt.hostname + ':' + '1883');
 
 async function startServer() {
     try {
@@ -20,6 +20,16 @@ async function startServer() {
         const db = client.db(config.mongodb.database);
         const haiku = db.collection(config.mongodb.collection);
 
+        app.post('/led', async (req, res) => {
+            const { color } = req.body;
+            console.log("Color recibido: ${color}");
+            res.status(200).send('Color recibido: ${color}');
+            mqttClient.publish('color', color, {}, (error) => {
+                if (error) {
+                    console.error('Publish error:', error);
+                }
+            });
+        });
 
         app.post('/save-data', async (req, res) => {
             const { topic, message } = req.body;
@@ -69,17 +79,6 @@ async function startServer() {
                 console.error('Error fetching data from MongoDB', err);
                 res.status(500).send('Error fetching data from MongoDB');
             }
-        });
-
-        app.post('/led', async (req, res) => {
-            const { color } = req.body;
-            console.log("Color recibido: ${color}");
-            res.status(200).send('Color recibido: ${color}');
-            mqttClient.publish('color', color, {}, (error) => {
-                if (error) {
-                    console.error('Publish error:', error);
-                }
-            });
         });
 
         app.post('/publishMessage', async (req, res) => {
