@@ -1,3 +1,4 @@
+import mqtt from 'mqtt';
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
@@ -10,6 +11,7 @@ app.use(bodyParser.json());
 
 const uri = 'mongodb://' + config.mongodb.hostname + ':' + config.mongodb.port + '/' + config.mongodb.database;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const mqttClient = mqtt.connect('ws://' + config.mqtt.hostname + ':' + config.mqtt.port);
 
 async function startServer() {
     try {
@@ -67,6 +69,65 @@ async function startServer() {
                 console.error('Error fetching data from MongoDB', err);
                 res.status(500).send('Error fetching data from MongoDB');
             }
+        });
+
+        app.post('/led-signal', async (req, res) => {
+            const { color } = req.body;
+            console.log("Color recibido: ${color}");
+            res.status(200).send('Color recibido: ${color}');
+            mqttClient.publish('color', color, {}, (error) => {
+                if (error) {
+                    console.error('Publish error:', error);
+                }
+            });
+        });
+
+        app.post('/publishMessage', (req, res) => {
+            console.log('Attempting to connect to the client');
+            const client = mqtt.connect('ws://' + '52.71.113.81:9000');
+            console.log(client);
+
+            let weightReceived = false;
+            let heightReceived = false;
+            let weight = null;
+            let height = null;
+
+            client.on('connect', () => {
+                console.log('Connected to MQTT Broker on EC2');
+
+                // Subscribe to the topics 'weight' and 'height'
+                client.subscribe(['weight', 'height']);
+
+                // Publish a message to a topic
+                client.publish('start', 'clicked', {}, (error) => {
+                    if (error) {
+                        console.error('Publish error:', error);
+                    }
+                });
+            });
+
+            client.on('message', (topic, message) => {
+                console.log(`Message received on topic ${topic}: ${message.toString()}`);
+
+                if (topic === 'weight') {
+                    weightReceived = true;
+                    weight = message.toString();
+                } else if (topic === 'height') {
+                    heightReceived = true;
+                    height = message.toString()
+                }
+                console.log(weightReceived, heightReceived);
+                // If both data are received, send a response
+                if (weightReceived && heightReceived) {
+                    console.log("Weight and height received");
+                    res.json({weight: weight, height: height});
+                    client.end();
+                }
+            });
+
+            client.on('error', (error) => {
+                console.error('Connection error:', error);
+            });
         });
 
         app.listen(config.app.port, () => {
