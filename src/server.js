@@ -75,11 +75,6 @@ async function startServer() {
             const { color } = req.body;
             console.log("Color recibido: ${color}");
             res.status(200).send('Color recibido: ${color}');
-            mqttClient.publish('color', color, {}, (error) => {
-                if (error) {
-                    console.error('Publish error:', error);
-                }
-            });
         });
 
         app.post('/publishMessage', async (req, res) => {
