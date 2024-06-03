@@ -84,29 +84,28 @@ async function startServer() {
 
         app.post('/publishMessage', (req, res) => {
             console.log('Attempting to connect to the client');
-            const client = mqtt.connect('ws://' + '52.71.113.81:9000');
-            console.log(client);
+            console.log(mqttClient);
 
             let weightReceived = false;
             let heightReceived = false;
             let weight = null;
             let height = null;
 
-            client.on('connect', () => {
+            mqttClient.on('connect', () => {
                 console.log('Connected to MQTT Broker on EC2');
 
                 // Subscribe to the topics 'weight' and 'height'
-                client.subscribe(['weight', 'height']);
+                mqttClient.subscribe(['weight', 'height']);
 
                 // Publish a message to a topic
-                client.publish('start', 'clicked', {}, (error) => {
+                mqttClient.publish('start', 'clicked', {}, (error) => {
                     if (error) {
                         console.error('Publish error:', error);
                     }
                 });
             });
 
-            client.on('message', (topic, message) => {
+            mqttClient.on('message', (topic, message) => {
                 console.log(`Message received on topic ${topic}: ${message.toString()}`);
 
                 if (topic === 'weight') {
@@ -121,11 +120,11 @@ async function startServer() {
                 if (weightReceived && heightReceived) {
                     console.log("Weight and height received");
                     res.json({weight: weight, height: height});
-                    client.end();
+                    mqttClient.end();
                 }
             });
 
-            client.on('error', (error) => {
+            mqttClient.on('error', (error) => {
                 console.error('Connection error:', error);
             });
         });
