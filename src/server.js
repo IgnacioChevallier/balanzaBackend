@@ -71,10 +71,15 @@ async function startServer() {
             }
         });
 
-        app.post('/led-signal', async (req, res) => {
+        app.post('/led', async (req, res) => {
             const { color } = req.body;
             console.log("Color recibido: ${color}");
             res.status(200).send('Color recibido: ${color}');
+            mqttClient.publish('color', color, {}, (error) => {
+                if (error) {
+                    console.error('Publish error:', error);
+                }
+            });
         });
 
         app.post('/publishMessage', async (req, res) => {
@@ -87,7 +92,7 @@ async function startServer() {
             let height = null;
 
             mqttClient.on('connect', () => {
-                console.log('Connected to MQTT Broker on EC2');
+                    console.log('Connected to MQTT Broker on EC2');
 
                 // Subscribe to the topics 'weight' and 'height'
                 mqttClient.subscribe(['weight', 'height']);
